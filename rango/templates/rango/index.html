@@ -6,10 +6,27 @@
     <title>Rango</title>
 </head>
 <body>
-    <h1>Rango says..</h1>
-    hello world!   <strong>{{ boldmessage }}</strong></br>
+    <h1>Rango says...!</h1>
+    {% if categories %}<strong>Categories</strong>
+        <ul>
+            {% for category in categories %}
+            <li><a href="/rango/category/{{ category.url }}">{{ category }}</a></li>
+            {% endfor %}
+        </ul>
+    <a href="/rango/add_category/">Add a New Category</a></br>
+    {% else %}
+        <strong>There are no categories present.</strong>
+    {% endif %}
+    {% if page_list %}<strong>Pages</strong>
+        <ul>
+            {% for page in page_list %}
+            <li><a href="{{ page.url }}">{{ page.title }}</a> </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <strong>nO pages currently in category.</strong></strong>
+    {% endif %}
     <a href="/rango/about/"> About </a></br>
     <img src="{% static "rango/images/bg.jpg" %}" alt="Picture of Rango" /> <!-- Images -->
-
 </body>
 </html>
