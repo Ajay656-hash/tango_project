@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from rango.models import Category, Page
 from rango.forms import CategoryForm, PageForm, UserForm, UserProfileForm
+from datetime import datetime
 
 
 # Create your views here.
@@ -19,16 +20,51 @@ def decode_category(category_url):
 
 def about(request):
     context = RequestContext(request)
-    return render_to_response('rango/about.html', {}, context )
+
+    # If the visits session varible exists, take it and use it.
+    # If it doesn't, we haven't visited the site so set the count to zero.
+    if request.session.get('visits'):
+        count = request.session.get('visits')
+    else:
+        count = 0
+
+    # remember to include the visit data
+    response =  render_to_response('rango/about.html', {'visits': count}, context )
+
+    #process to set cookie with a value
+    #this way we can save the cookie at client-side.
+    #Below in index (NEW CODE) is process for server-side cookie, using request.session
+
+    #response.set_cookie('number', 25)
+    return response
 
 def index(request):
     context = RequestContext(request)
     category_list = Category.objects.order_by('-likes')[:5]
-    page_list = Page.objects.order_by('-views')[:5]
     context_dict = {'categories': category_list}
-    context_dict['page_list'] = page_list
+
     for category in category_list:
         category.url = encode_category(category.name)
+
+    page_list = Page.objects.order_by('-views')[:5]
+    context_dict['page_list'] = page_list
+
+    #### NEW CODE ####
+    if request.session.get('last_visit'):
+        # The session has a value for the last visit
+        last_visit_time = request.session.get('last_visit')
+        visits = request.session.get('visits', 0)
+
+        if (datetime.now() - datetime.strptime(last_visit_time[:-7], "%Y-%m-%d %H:%M:%S")).days > 5:
+            request.session['visits'] = visits + 1
+            request.session['last_visit'] = str(datetime.now())
+    else:
+        # The get returns None, and the session does not have a value for the last visit.
+        request.session['last_visit'] = str(datetime.now())
+        request.session['visits'] = 1
+    #### END NEW CODE ####
+
+    # Render and return the rendered response back to the user.
     return render_to_response('rango/index.html', context_dict, context)
 
 def category(request, category_name_url):
